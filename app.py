@@ -1,5 +1,6 @@
 from flask import Flask, request, Response, render_template
 import uuid
+import os
 
 app = Flask(__name__)
 
@@ -14,11 +15,11 @@ def home():
 # ===============================
 # GENERATE UDID PROFILE
 # ===============================
-@app.route('/api/get-profile', methods=['GET'])
+@app.route("/api/get-profile", methods=["GET"])
 def get_profile():
-    uid = request.args.get("uid", "unknown")
+    uid = request.args.get("uid", str(uuid.uuid4()))
 
-    root_url = request.url_root.rstrip('/')
+    root_url = request.url_root.rstrip("/")
     enroll_url = f"{root_url}/api/enroll?uid={uid}"
 
     profile_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -38,11 +39,11 @@ def get_profile():
         </array>
     </dict>
     <key>PayloadOrganization</key>
-    <string>IRRA ESIGN</string>
+    <string>GET UDID SERVICE</string>
     <key>PayloadDisplayName</key>
     <string>Get Device UDID</string>
     <key>PayloadIdentifier</key>
-    <string>com.irra.udid.{uuid.uuid4()}</string>
+    <string>com.getudid.profile.{uuid.uuid4()}</string>
     <key>PayloadUUID</key>
     <string>{uuid.uuid4()}</string>
     <key>PayloadVersion</key>
@@ -62,14 +63,14 @@ def get_profile():
 
 
 # ===============================
-# RECEIVE UDID
+# RECEIVE DEVICE DATA
 # ===============================
-@app.route('/api/enroll', methods=['POST'])
+@app.route("/api/enroll", methods=["POST"])
 def enroll():
-    udid = request.form.get('UDID')
-    product = request.form.get('PRODUCT')
-    version = request.form.get('VERSION')
-    uid = request.args.get('uid')
+    udid = request.form.get("UDID")
+    product = request.form.get("PRODUCT")
+    version = request.form.get("VERSION")
+    uid = request.args.get("uid")
 
     print("========== NEW DEVICE ==========")
     print("UID:", uid)
@@ -79,10 +80,18 @@ def enroll():
     print("================================")
 
     return """
-    <h2>✅ Device Registered Successfully</h2>
-    <p>You can now close this page.</p>
+    <html>
+        <body style="text-align:center;padding-top:50px;font-family:Arial;">
+            <h2>✅ Device Registered Successfully</h2>
+            <p>You can now close this page.</p>
+        </body>
+    </html>
     """
 
 
+# ===============================
+# RUN SERVER (RENDER COMPATIBLE)
+# ===============================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
