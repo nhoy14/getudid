@@ -1,63 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Get iPhone UDID</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get iPhone UDID</title>
     <style>
-        body {
-            background: #0f172a;
-            color: white;
-            font-family: Arial;
-            text-align: center;
-            padding-top: 100px;
-        }
-        .card {
-            background: #1e293b;
-            padding: 30px;
-            width: 90%;
-            max-width: 400px;
-            margin: auto;
-            border-radius: 12px;
-        }
-        button {
-            background: #2563eb;
-            border: none;
-            padding: 15px;
-            width: 100%;
-            color: white;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #1d4ed8;
-        }
-        .loading {
-            display: none;
-            margin-top: 20px;
-        }
+        body { background: #0f172a; color: white; font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #1e293b; padding: 2.5rem; border-radius: 1.5rem; width: 90%; max-width: 400px; text-align: center; border: 1px solid #334155; }
+        .udid-box { background: #020617; color: #10b981; padding: 1.2rem; border-radius: 0.75rem; word-break: break-all; font-family: monospace; margin: 1.5rem 0; border: 1px solid #1e293b; font-size: 1.1rem; }
+        button { background: #2563eb; color: white; border: none; padding: 1rem; border-radius: 0.5rem; font-weight: bold; width: 100%; cursor: pointer; }
+        .loading { display: none; margin-top: 20px; font-weight: bold; color: #94a3b8; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>📱 Get Your iPhone UDID</h2>
-    <p>Click below to install the profile.</p>
-
-    <button onclick="start()">Get UDID</button>
-
-    <div class="loading" id="loading">
-        ⏳ Waiting for installation...
-    </div>
+    {% if udid %}
+        <h2 style="color: #10b981;">✅ Your UDID</h2>
+        <div class="udid-box">{{ udid }}</div>
+        <button onclick="navigator.clipboard.writeText('{{ udid }}'); alert('Copied!')">Copy UDID</button>
+        <p><a href="/" style="color: #94a3b8; text-decoration: none; font-size: 0.8rem;">Click here to refresh</a></p>
+    {% else %}
+        <h2>📱 iPhone UDID Finder</h2>
+        <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.4;">Tap the button, download the profile, and install it in <b>Settings</b>.</p>
+        <button id="start-btn" onclick="startProcess()">Get My UDID</button>
+        <div id="loading" class="loading">⏳ Processing... Please go to Settings to Install.</div>
+    {% endif %}
 </div>
 
 <script>
-function start() {
-    document.getElementById("loading").style.display = "block";
-    const uid = Date.now();
-    window.location.href = "/api/get-profile?uid=" + uid;
-}
-</script>
+    function startProcess() {
+        const sessionUid = "id_" + Math.random().toString(36).substr(2, 9);
+        document.getElementById('start-btn').style.display = 'none';
+        document.getElementById('loading').style.display = 'block';
 
+        // Check for UDID every 2 seconds
+        setInterval(() => {
+            fetch('/api/check-status/' + sessionUid)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.udid) window.location.href = "/?udid=" + data.udid;
+                });
+        }, 2000);
+
+        // Download profile
+        window.location.href = "/api/get-profile?uid=" + sessionUid;
+    }
+</script>
 </body>
 </html>
