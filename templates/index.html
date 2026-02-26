@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Get iPhone UDID</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <style>
+        body {
+            background: #0f172a;
+            color: white;
+            font-family: Arial;
+            text-align: center;
+            padding-top: 100px;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            margin: auto;
+            border-radius: 12px;
+        }
+
+        button {
+            background: #2563eb;
+            border: none;
+            padding: 15px;
+            width: 100%;
+            color: white;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+    <h2>📱 Get Your iPhone UDID</h2>
+    <p>Click the button below to install profile.</p>
+
+    <button onclick="startProcess()">Get UDID</button>
+
+    <div class="loading" id="loading">
+        ⏳ Waiting for installation...
+    </div>
+</div>
+
+<script>
+function startProcess() {
+    document.getElementById("loading").style.display = "block";
+
+    const uid = Date.now(); // simple unique ID
+
+    window.location.href = "/api/get-profile?uid=" + uid;
+}
+</script>
+
+</body>
+</html>
