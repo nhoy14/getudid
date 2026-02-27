@@ -2,22 +2,26 @@ from flask import Flask, request, Response, render_template, jsonify
 import uuid
 import re
 import os
+import requests
 
 app = Flask(__name__)
 
 # Dictionary to store UDIDs temporarily in memory
 device_store = {}
 
+# --- YOUR TELEGRAM BOT CONFIGURATION ---
+TELEGRAM_BOT_TOKEN = "8334804183:AAFCqfdeVJVuDlmpqH1r5JowpjaSc8gAktg"
+TELEGRAM_CHAT_ID = "8052258612"
+
 @app.route("/")
 def home():
-    # If the UDID is passed in the URL (from the redirect), show it
-    udid = request.args.get('udid')
+    # Capture the UDID from the URL if it exists
+    udid = request.args.get('udid', '')
     return render_template("index.html", udid=udid)
 
 @app.route('/api/get-profile', methods=['GET'])
 def get_profile():
     uid = request.args.get("uid", "unknown")
-    # Render automatically provides HTTPS, which is required by Apple
     root_url = request.url_root.rstrip('/')
     enroll_url = f"{root_url}/api/enroll?uid={uid}"
 
@@ -35,11 +39,11 @@ def get_profile():
         </array>
     </dict>
     <key>PayloadOrganization</key>
-    <string>Device Identifier</string>
+    <string>Nhoy Esign</string>
     <key>PayloadDisplayName</key>
-    <string>Profile Service</string>
+    <string>UDID Retrieval Service</string>
     <key>PayloadIdentifier</key>
-    <string>com.render.udid.{uuid.uuid4()}</string>
+    <string>com.irra.udid.{uuid.uuid4()}</string>
     <key>PayloadUUID</key>
     <string>{uuid.uuid4()}</string>
     <key>PayloadVersion</key>
@@ -68,7 +72,7 @@ def enroll():
     if uid:
         device_store[uid] = captured_udid
 
-    # 301 Redirect sends the user back to Safari automatically
+    # 301 Redirect sends the user back to Safari automatically with the UDID in the URL
     root_url = request.url_root.rstrip('/')
     return Response(status=301, headers={"Location": f"{root_url}/?udid={captured_udid}"})
 
@@ -76,7 +80,29 @@ def enroll():
 def check_status(uid):
     return jsonify({"udid": device_store.get(uid)})
 
+@app.route('/api/submit-order', methods=['POST'])
+def submit_order():
+    data = request.json
+    udid = data.get('udid', 'N/A')
+    email = data.get('email', 'N/A')
+
+    # Send notification to Telegram
+    message = f"🔔 *New Certificate Order!*\n\n📱 *UDID:* `{udid}`\n📧 *Email:* `{email}`\n💰 *Status:* User clicked Paid"
+    telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    
+    try:
+        response = requests.post(telegram_url, json={
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": message,
+            "parse_mode": "Markdown"
+        })
+        print(f"Telegram API Response: {response.status_code} - {response.text}")
+    except Exception as e:
+        print(f"Telegram error: {e}")
+
+    return jsonify({"status": "success", "message": "Order processed"})
+
 if __name__ == "__main__":
-    # Port is handled by Render/Gunicorn in production
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    # Running on 0.0.0.0 so Ngrok can access it
+    app.run(host="0.0.0.0", port=port, debug=True)
